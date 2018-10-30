@@ -12,32 +12,39 @@ ReactDOM.render(<App />, document.getElementById('root'));
 serviceWorker.unregister();
 
 const attacker = {
+  /*
+Sharpshooter and great weapon master can only be selected for one set of  damage.
+hitPercentage will be set by the accuracy function based on the target.
+accuracy function will adjust the critPercentage based on advantage/disadvantage and eventually halfing and lucky as well
+  */
   toHit : 5,
   advantage : false,
   disadvantage : false,
   hitPercentage : undefined,
   critPercentage : 5,
-  halfling  : false, // not accounted for. damage per swing changes.
-  halfOrc : true,
-  luckyFeat : false, // not accounted for. damage per swing changes.
+  halfling  : false, // not accounted for. accuracy changes.
+  halfOrc : false,
+  luckyFeat : false, // not accounted for. accuracy changes.
+  sharpshooterFeat : false,
+  greatWeaponFeat : false,
+  gwFightStyle : false, // not accounted for.  damage changes.
   damage : [{
     diceNum : 2,
     dieSize : 6,
     modifier : 3,
-    damageType : 'mundane',
-    sharpshooter : false, // not accounted for. hit and crit changes.
-    greatWeapon : false // not accounted for.  hit and crit changes.
-  }, {
-    diceNum : 1,
-    dieSize : 8,
-    modifier : 3,
-    damageType : 'radiant',
-    sharpshooter : false, // not accounted for. hit and crit changes.
-    greatWeapon : false // not accounted for.  hit and crit changes.
+    damageType : 'mundane'
+  // }, {
+  //   diceNum : 1,
+  //   dieSize : 8,
+  //   modifier : 3,
+  //   damageType : 'radiant'
   }]
 };
 
 const defender = {
+  /*
+A later update will cover spell feats, class abilities, saves, and advantage/disadvantage on spell saving throws
+  */
   ac : 14,
   save : undefined, // not accounted for.  damage per swing changes
   saveStat : {
@@ -103,15 +110,18 @@ halfOrc only triggered on a critical hit.
 Returns object with a key for totalHit damage and a key for an
   array of all of the damage types that were used in the attack.
   This array isn't currently used for anything but reference.
+If sharpshooterFeat or greatWeaponFeat are true tracks and applies the
+  ideal damage.
 Basic damage math:
-Average roll on a die is the number of sides plus 1.  Then divide by two.
+  Average roll on a die is the number of sides plus 1.  Then divide by two.
 
-number of dice * ((number of sides on that die + 1) / 2) + modifier
+  number of dice * ((number of sides on that die + 1) / 2) + modifier
   */
   let resistance;
   let vulnerable;
   let immune;
   let rawDamage;
+  let greatAndSharpBonusDmg = 0;
   const hit = hitOrCrit === 'hit';
   const crit = hitOrCrit === 'crit';
   const hitSummary = {
@@ -126,13 +136,21 @@ number of dice * ((number of sides on that die + 1) / 2) + modifier
     rawDamage = atk.diceNum * (hit ? 1 : 2) * ((atk.dieSize + 1)/2) + atk.modifier;
 
     if (resistance) {
+      if ((attacker.sharpshooterFeat|| attacker.greatWeaponFeat) && greatAndSharpBonusDmg === 0) {
+        greatAndSharpBonusDmg = 5;
+      }
       hitSummary.hitTotal += rawDamage / 2;
     } else if (vulnerable) {
+      if (attacker.sharpshooterFeat|| attacker.greatWeaponFeat) {
+        greatAndSharpBonusDmg = 15;
+      }
       hitSummary.hitTotal += rawDamage * 2;
-    } else if (immune){
-      hitSummary.hitTotal += 0;
-    } else {
+    } else if (!immune) {
+      if ((attacker.sharpshooterFeat|| attacker.greatWeaponFeat) && greatAndSharpBonusDmg != 15) {
+        greatAndSharpBonusDmg = 10;
+      }
       hitSummary.hitTotal += rawDamage;
+
     }
     hitSummary.damageTypes.push(atk.damageType);
   });
@@ -140,6 +158,7 @@ number of dice * ((number of sides on that die + 1) / 2) + modifier
   if (attacker.halfOrc && crit) {
     hitSummary.hitTotal += halfOrcCrit(attacker, defender);
   }
+  hitSummary.hitTotal += greatAndSharpBonusDmg;
 
   return hitSummary;
 }
@@ -147,6 +166,7 @@ number of dice * ((number of sides on that die + 1) / 2) + modifier
 function accuracy(attacker, defender) {
   /*
 Sets the accuracy for the character based on the target.
+Handles the -5 to hit from great weapon feat or sharpshooter feat.
 Also adjusts the crit percentage if advantage or disadvantage
 
 Basic math is:
@@ -157,6 +177,9 @@ Basic math is:
 5% chance of rolling a 20
 advantageDieRoll and disadvantageDieRoll taken from a statistical site online.
   */
+  if (attacker.sharpshooterFeat || attacker.greatWeaponFeat) {
+    attacker.toHit -= 5;
+  }
   if (attacker.advantage) {
     attacker.critPercentage = advantageDieRoll[21 - attacker.critPercentage / 5];
     attacker.hitPercentage = advantageDieRoll[defender.ac - attacker.toHit] - attacker.critPercentage;
@@ -186,7 +209,6 @@ Sum the above numbers then divide by 100 to get damage per swing
 
   return (hitTotal + critTotal) / 100;
 }
-
 
 
 console.log(damagePerSwing(attacker, defender));
