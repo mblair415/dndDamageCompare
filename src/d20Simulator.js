@@ -1,41 +1,4 @@
-// const attacker = {
-//   toHit : 5,
-//   advantage : false,
-//   disadvantage : false,
-//   hitPercentage : undefined,
-//   critPercentage : 5,
-//   halfling  : false, // not accounted for. accuracy changes.
-//   halfOrc : false,
-//   luckyFeat : false, // not accounted for. accuracy changes.
-//   sharpshooterFeat : false,
-//   greatWeaponFeat : false,
-//   gwFightStyle : false, // not accounted for.  damage changes.
-//   damage : [{
-//     diceNum : 2,
-//     dieSize : 6,
-//     modifier : 3,
-//     damageType : 'mundane'
-//   // }, {
-//   //   diceNum : 1,
-//   //   dieSize : 8,
-//   //   modifier : 3,
-//   //   damageType : 'radiant'
-//   }]
-// };
-
-// const defender = {
-//   ac : 14,
-//   save : undefined, // not accounted for.  damage per swing changes
-//   saveStat : {
-//     advantage : false, // not accounted for.  hit and crit changes.
-//     disadvantage : false // not accounted for.  hit and crit changes.
-//     // strSave : 4
-//   },
-//   resistances : new Set(),
-//   vulnerabilities : new Set(),
-//   immunities : new Set(),
-// };
-
+// not all of the simulations can be done at once without a timeout.
 function dieRoll() {
   return Math.floor((20 * Math.random()) + 1)
 }
@@ -52,8 +15,6 @@ const disadvantageD20 = {};
 const halflingD20 = {};
 const luckyD20 = {};
 const regularD20 = {};
-
-
 
 function regularResult(times) {
   let sum = 0;
@@ -85,7 +46,6 @@ function advantageResult(times) {
     sum+= d20AsArray[i];
     advantageD20[i] = (Math.round(sum/times * 1000) / 10);
   }
-
 }
 
 function disadvantageResult(times) {
@@ -320,6 +280,9 @@ function disadvantageHalflingResult(times) {
     disadvantageHalflingD20[i] = (Math.round(sum/times * 1000) / 10);
   }
 }
+
+
+// ** Cannot do all at once **
 
 regularResult(800000);
 advantageResult(800000);

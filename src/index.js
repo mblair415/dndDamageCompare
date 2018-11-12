@@ -1,6 +1,3 @@
-console.log('d&d accuracy quest')
-
-
 const attacker = {
   /*
 Sharpshooter and great weapon master can only be selected for one set of  damage.
@@ -197,7 +194,6 @@ Basic damage math:
         greatAndSharpBonusDmg = 10;
       }
       hitSummary.hitTotal += rawDamage;
-
     }
     hitSummary.damageTypes.push(atk.damageType);
   });
