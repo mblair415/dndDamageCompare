@@ -1,36 +1,35 @@
+console.log('index.js running');
+
 const attacker = {
   /*
-Sharpshooter and great weapon master can only be selected for one set of  damage.
+Sharpshooter and great weapon master can only be selected for one set of damage, and it automatically adjusts accuracy.
 hitPercentage will be set by the accuracy function based on the target.
-accuracy function will adjust the critPercentage based on advantage/disadvantage and eventually halfing and lucky as well
+accuracy function will adjust the critPercentage based on advantage/disadvantage.
+An assumption is made that the first source of damage is where the great weapon master feat or sharpshooting feat is added.
   */
-  toHit : 5,
-  advantage : true,
+  toHit : 9,
+  advantage : false,
   disadvantage : false,
   hitPercentage : undefined,
   critPercentage : 5,
-  halfling  : true,
+  halfling  : false,
   halfOrc : false,
   luckyFeat : false,
-  sharpshooterFeat : true,
-  greatWeaponFeat : false,
-  gwFightStyle : false, // not accounted for.  damage changes.
+  sharpshooterFeat : false,
+  greatWeaponFeat : true,
+  savageAttackerFeat : false, // not yet included
+  gwFightStyle : false,
   damage : [{
-    diceNum : 2,
-    dieSize : 6,
-    modifier : 3,
-    damageType : 'mundane'
-  // }, {
-  //   diceNum : 1,
-  //   dieSize : 8,
-  //   modifier : 3,
-  //   damageType : 'radiant'
+    diceNum : 1,
+    dieSize : 8,
+    modifier : 0,
+    damageType : 'fire'
   }]
 };
 
 const defender = {
   /*
-A later update will cover spell feats, class abilities, saves, and advantage/disadvantage on spell saving throws
+  A later update will cover spell feats, class abilities, saves, and advantage/disadvantage on spell saving throws
   */
   ac : 14,
   save : undefined, // not accounted for.  damage per swing changes
@@ -41,7 +40,7 @@ A later update will cover spell feats, class abilities, saves, and advantage/dis
   },
   resistances : new Set(),
   vulnerabilities : new Set(),
-  immunities : new Set(),
+  immunities : new Set()
 };
 
 // these were determined by running a simulation with 450k - 800k die rolls to determine percentages
@@ -123,28 +122,39 @@ const disadvantageHalflingDieRoll = {
   16: 6.9, 17: 4.4, 18: 2.5, 19: 1.1, 20: 0.3
 };
 
+// key is sides on die value is % extra damage if rerolling a roll of 1 or 2 a single time.
+const gWFightStyleDamMod = {
+  12 : .126, 10 : .145, 8 : .166, 6 : .19, 4 : .2
+}
+
 function halfOrcCrit(attacker, defender) {
   /*
 If target is immune to damage type of all attacks this returns 0.
-Loops through attacks, if target not immune to current attack's
-  damage type then it will check to see if it should add damage
+Loops through damage soures to check to see which combination of a single die size and damage type is highest.
 Adding damage will take resistance and vulnerabilities into account.
-Vulnerable to 1D4 is better than resistant to 1D6
+Ensures great weapon fighting style is taken into account on a rolled die.
   */
-  let total = 0;
+  let highestOption = 0;
+  let gwMod;
 
   attacker.damage.forEach( atk => {
+    console.log('half orc iteration ', atk)
     if (!defender.immunities.has(atk.damageType)) {
+      gwMod = attacker.gwFightStyle ? ((atk.dieSize + 1)/2) * gWFightStyleDamMod[atk.dieSize] * atk.diceNum : 0;
+
       if (defender.resistances.has(atk.damageType)) {
-        total = Math.max(total, ((atk.dieSize + 1) / 2) / 2);
+        highestOption = Math.max(highestOption, (gwMod +(atk.dieSize + 1) / 2) / 2);
       } else if (defender.vulnerabilities.has(atk.damageType)) {
-        total = Math.max(total, ((atk.dieSize + 1) / 2) * 2);
+        highestOption = Math.max(higestOption, (gwMod + (atk.dieSize + 1) / 2) * 2);
       } else {
-        total = Math.max(total, (atk.dieSize + 1) / 2);
+        highestOption = Math.max(highestOption, gwMod + (atk.dieSize + 1) / 2);
       }
+
+      console.log({highestOption})
     }
   });
-  return total;
+
+  return highestOption;
 }
 
 function attackDamage(attacker, defender, hitOrCrit) {
@@ -161,49 +171,38 @@ Basic damage math:
 
   number of dice * ((number of sides on that die + 1) / 2) + modifier
   */
-  let resistance;
-  let vulnerable;
-  let immune;
   let rawDamage;
-  let greatAndSharpBonusDmg = 0;
+  let gWMod;
+  let hitTotal = 0;
   const hit = hitOrCrit === 'hit';
   const crit = hitOrCrit === 'crit';
-  const hitSummary = {
-    hitTotal : 0,
-    damageTypes : []
-  };
+
+  if (hit && (attacker.greatWeaponFeat || attacker.sharpshooterFeat)) {
+    attacker.damage[0].modifier += 10;
+  }
 
   attacker.damage.forEach( atk => {
-    resistance = defender.resistances.has(atk.damageType);
-    vulnerable = defender.vulnerabilities.has(atk.damageType);
-    immune = defender.immunities.has(atk.damageType);
-    rawDamage = atk.diceNum * (hit ? 1 : 2) * ((atk.dieSize + 1)/2) + atk.modifier;
+    gWMod = attacker.gwFightStyle ? 
+      ((atk.dieSize + 1)/2) * gWFightStyleDamMod[atk.dieSize] * atk.diceNum * (hit ? 1 : 2) : 
+      0;
+    rawDamage = atk.diceNum * (hit ? 1 : 2) * ((atk.dieSize + 1)/2) + gWMod + atk.modifier;
 
-    if (resistance) {
-      if ((attacker.sharpshooterFeat|| attacker.greatWeaponFeat) && greatAndSharpBonusDmg === 0) {
-        greatAndSharpBonusDmg = 5;
+    if (!defender.immunities.has(atk.damageType)) {
+      if (defender.resistances.has(atk.damageType)) {
+        hitTotal += rawDamage / 2;
+      } else if (defender.vulnerabilities.has(atk.damageType)) {
+        hitTotal += rawDamage * 2;
+      } else {
+        hitTotal += rawDamage;
       }
-      hitSummary.hitTotal += rawDamage / 2;
-    } else if (vulnerable) {
-      if (attacker.sharpshooterFeat|| attacker.greatWeaponFeat) {
-        greatAndSharpBonusDmg = 15;
-      }
-      hitSummary.hitTotal += rawDamage * 2;
-    } else if (!immune) {
-      if ((attacker.sharpshooterFeat|| attacker.greatWeaponFeat) && greatAndSharpBonusDmg != 15) {
-        greatAndSharpBonusDmg = 10;
-      }
-      hitSummary.hitTotal += rawDamage;
     }
-    hitSummary.damageTypes.push(atk.damageType);
   });
 
   if (attacker.halfOrc && crit) {
-    hitSummary.hitTotal += halfOrcCrit(attacker, defender);
+    hitTotal += halfOrcCrit(attacker, defender);
   }
-  hitSummary.hitTotal += greatAndSharpBonusDmg;
 
-  return hitSummary;
+  return hitTotal;
 }
 
 function accuracy(attacker, defender) {
@@ -272,13 +271,16 @@ Sum the above numbers then divide by 100 to get damage per swing
   which represents misses, hits and critical hits
   */
   accuracy(attacker, defender);
-  const hitTotal = attackDamage(attacker, defender, 'hit').hitTotal * attacker.hitPercentage;
-  const critTotal = attackDamage(attacker, defender, 'crit').hitTotal * attacker.critPercentage;
+
+  const hitTotal = attackDamage(attacker, defender, 'hit') * attacker.hitPercentage;
+
+  const critTotal = attackDamage(attacker, defender, 'crit') * attacker.critPercentage;
 
   return (hitTotal + critTotal) / 100;
 }
 
 
-console.log(damagePerSwing(attacker, defender));
+console.log(`Damage per swing ${damagePerSwing(attacker, defender)}`);
 
-// console.log(attackDamage(attacker, defender, 'crit'));
+
+module.exports.attacker

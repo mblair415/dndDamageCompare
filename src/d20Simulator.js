@@ -1,4 +1,10 @@
-// not all of the simulations can be done at once without a timeout.
+/*
+This file is purely informational.
+This is how the accuracy was determined.
+
+Not all of the simulations can be  done at once or it will timeout.
+*/
+
 function dieRoll() {
   return Math.floor((20 * Math.random()) + 1)
 }
