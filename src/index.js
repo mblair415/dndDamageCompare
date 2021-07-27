@@ -14,6 +14,7 @@ An assumption is made that the first source of damage is where the great weapon 
   critPercentage : 5,
   halfling  : false,
   halfOrc : false,
+  elvenAccuracy : false,
   luckyFeat : false,
   sharpshooterFeat : false,
   greatWeaponFeat : true,
@@ -232,7 +233,7 @@ More complex accuracy determined by a simulator
   } else if (attacker.disadvantage && attacker.halfling) {
     attacker.critPercentage = disadvantageHalflingDieRoll[21 - attacker.critPercentage / 5];
     attacker.hitPercentage = disadvantageHalflingDieRoll[defender.ac - attacker.toHit] - attacker.critPercentage;
-  } else if (attacker.advantage && attacker.luckyFeat) {
+  } else if (attacker.advantage && attacker.luckyFeat || attacker.elvenAccuracy) {
     attacker.critPercentage = advantageLuckyDieRoll[21 - attacker.critPercentage / 5];
     attacker.hitPercentage = advantageLuckyDieRoll[defender.ac - attacker.toHit] - attacker.critPercentage;
   } else if (attacker.disadvantage && attacker.luckyFeat) {
