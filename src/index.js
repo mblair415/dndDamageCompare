@@ -128,7 +128,7 @@ const gWFightStyleDamMod = {
   12 : .126, 10 : .145, 8 : .166, 6 : .19, 4 : .2
 }
 
-function halfOrcCrit(attacker, defender) {
+const halfOrcCrit = (attacker, defender) => {
   /*
 If target is immune to damage type of all attacks this returns 0.
 Loops through damage soures to check to see which combination of a single die size and damage type is highest.
@@ -158,7 +158,7 @@ Ensures great weapon fighting style is taken into account on a rolled die.
   return highestOption;
 }
 
-function attackDamage(attacker, defender, hitOrCrit) {
+const attackDamage = (attacker, defender, hitOrCrit) => {
   /*
 Same function will spit out damage for a regular hit or a crit.
 halfOrc only triggered on a critical hit.
@@ -206,7 +206,7 @@ Basic damage math:
   return hitTotal;
 }
 
-function accuracy(attacker, defender) {
+const accuracy = (attacker, defender) => {
   /*
 Sets the accuracy for the character based on the target.
 Handles the -5 to hit from great weapon feat or sharpshooter feat.
@@ -261,7 +261,7 @@ More complex accuracy determined by a simulator
   attacker.hitPercentage = Math.max(attacker.hitPercentage, 0);
 }
 
-function damagePerSwing(attacker, defender) {
+const damagePerSwing = (attacker, defender) => {
   /*
 Averages determined by looking at 100 swings.
 
