@@ -1,3 +1,4 @@
+// Percentage of rolling each side of the die with the feat which is essentially like advantage
 const d4 = {
         '1': 100, 
         '2': 93.8, 
@@ -49,6 +50,7 @@ const d4 = {
         '12': 16
     };
 
+// Average die result with each size die with the feat by itself
 const savageAttackerFeatAdjusted = {
     4 : 3.13,
     6 : 4.47,
@@ -57,6 +59,7 @@ const savageAttackerFeatAdjusted = {
     12 : 8.48
 };
 
+// Average die result with each die size with the feat and also great weapon fighting style
 const savageAttackerFeatGreatWeapAdjusted = {
     4 : 3.53,
     6 : 4.959,

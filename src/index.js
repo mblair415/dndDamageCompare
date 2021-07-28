@@ -9,28 +9,29 @@ console.log('index.js running');
 */
 const attacker = {
   toHit : 5 ,
-  advantage : false,
+  advantage : true,
   disadvantage : false,
   hitPercentage : undefined,
   critPercentage : 5,
-  halfling  : false,
-  halfOrc : false,
-  elvenAccuracy : false,
-  luckyFeat : false,
-  sharpshooterFeat : false,
-  greatWeaponFeat : true,
-  savageAttackerFeat : false,
-  gwFightStyle : false,
+  race : {
+    halfling : true,
+    halfOrc : false
+  },
+  feat : {
+    elvenAccuracy : false,
+    greatWeapon : false,
+    lucky : true,
+    savageAttacker : false,
+    sharpshooter : false,
+  },
+  fightingStyle : {
+    gwFightStyle : false
+  },
   damage : [{
-    diceNum : 2,
+    diceNum : 1,
     dieSize : 6,
-    modifier : 3,
-    damageType : 'slashing'
-  },{
-    diceNum : 2,
-    dieSize : 8,
     modifier : 0,
-    damageType : 'radiant'
+    damageType : 'slashing'
   }]
 };
 
@@ -168,11 +169,11 @@ const averageDieDamage = {
 };
 
 const determineAverageDamPerDie = (attacker, dieSize) => {
-  if (attacker.savageAttackerFeat && attacker.gwFightStyle) {
+  if (attacker.feat.savageAttacker && attacker.fightingStyle.gwFightStyle) {
     return averageDieDamage.gwAndSavageAttacker[dieSize];
-  } else if (attacker.savageAttackerFeat) {
+  } else if (attacker.feat.savageAttacker) {
     return averageDieDamage.savageAttackerFeat[dieSize];
-  } else if (attacker.gwFightStyle) {
+  } else if (attacker.fightingStyle.gwFightStyle) {
     return averageDieDamage.gwFeat[dieSize];
   } else {
     return averageDieDamage.unmodified[dieSize];
@@ -223,7 +224,7 @@ const attackDamage = (attacker, defender, hitOrCrit) => {
   const hit = hitOrCrit === 'hit',
     crit = hitOrCrit === 'crit';
 
-  if (hit && (attacker.greatWeaponFeat || attacker.sharpshooterFeat)) {
+  if (hit && (attacker.feat.greatWeapon || attacker.feat.sharpshooter)) {
     attacker.damage[0].modifier += 10;
   }
 
@@ -243,7 +244,7 @@ const attackDamage = (attacker, defender, hitOrCrit) => {
     }
   });
 
-  if (attacker.halfOrc && crit) {
+  if (attacker.race.halfOrc && crit) {
     swingTotal += halfOrcCrit(attacker, defender);
   }
 
@@ -261,29 +262,29 @@ const attackDamage = (attacker, defender, hitOrCrit) => {
   More complex accuracy determined by a simulator
 */
 const accuracy = (attacker, defender) => {
-  if (attacker.sharpshooterFeat || attacker.greatWeaponFeat) {
+  if (attacker.feat.sharpshooter || attacker.feat.greatWeapon) {
     attacker.toHit -= 5;
   }
 
-  if (attacker.advantage && attacker.halfling && attacker.luckyFeat) {
+  if (attacker.advantage && attacker.race.halfling && attacker.feat.lucky) {
     attacker.critPercentage = advantageLuckyHalflingDieRoll[21 - attacker.critPercentage / 5];
     attacker.hitPercentage = advantageLuckyHalflingDieRoll[defender.ac - attacker.toHit] - attacker.critPercentage;
-  } else if (attacker.disadvantage && attacker.halfling && attacker.luckyFeat) {
+  } else if (attacker.disadvantage && attacker.race.halfling && attacker.feat.lucky) {
     attacker.critPercentage = disadvantageLuckyHalflingDieRoll[21 - attacker.critPercentage / 5];
     attacker.hitPercentage = disadvantageLuckyHalflingDieRoll[defender.ac - attacker.toHit] - attacker.critPercentage;
-  } else if (attacker.advantage && attacker.halfling) {
+  } else if (attacker.advantage && attacker.race.halfling) {
     attacker.critPercentage = advantageHalflingDieRoll[21 - attacker.critPercentage / 5];
     attacker.hitPercentage = advantageHalflingDieRoll[defender.ac - attacker.toHit] - attacker.critPercentage;
-  } else if (attacker.disadvantage && attacker.halfling) {
+  } else if (attacker.disadvantage && attacker.race.halfling) {
     attacker.critPercentage = disadvantageHalflingDieRoll[21 - attacker.critPercentage / 5];
     attacker.hitPercentage = disadvantageHalflingDieRoll[defender.ac - attacker.toHit] - attacker.critPercentage;
-  } else if (attacker.advantage && attacker.luckyFeat || attacker.elvenAccuracy) {
+  } else if (attacker.advantage && attacker.feat.lucky || attacker.feat.elvenAccuracy) {
     attacker.critPercentage = advantageLuckyDieRoll[21 - attacker.critPercentage / 5];
     attacker.hitPercentage = advantageLuckyDieRoll[defender.ac - attacker.toHit] - attacker.critPercentage;
-  } else if (attacker.disadvantage && attacker.luckyFeat) {
+  } else if (attacker.disadvantage && attacker.feat.lucky) {
     attacker.critPercentage = disadvantageLuckyDieRoll[21 - attacker.critPercentage / 5];
     attacker.hitPercentage = disadvantageLuckyDieRoll[defender.ac - attacker.toHit] - attacker.critPercentage;
-  } else if (attacker.halfling && attacker.luckyFeat) {
+  } else if (attacker.race.halfling && attacker.feat.lucky) {
     attacker.critPercentage = luckyHalflingDieRoll[21 - attacker.critPercentage / 5];
     attacker.hitPercentage = luckyHalflingDieRoll[defender.ac - attacker.toHit] - attacker.critPercentage;
   } else if (attacker.advantage) {
@@ -292,10 +293,10 @@ const accuracy = (attacker, defender) => {
   } else if (attacker.disadvantage) {
     attacker.critPercentage = disadvantageDieRoll[21 - attacker.critPercentage / 5];
     attacker.hitPercentage = disadvantageDieRoll[defender.ac - attacker.toHit] - attacker.critPercentage;
-  } else if (attacker.luckyFeat) {
+  } else if (attacker.feat.lucky) {
     attacker.critPercentage = luckyDieRoll[21 - attacker.critPercentage / 5];
     attacker.hitPercentage = luckyDieRoll[defender.ac - attacker.toHit] - attacker.critPercentage;
-  } else if (attacker.halfling) {
+  } else if (attacker.race.halfling) {
     attacker.critPercentage = halflingDieRoll[21 - attacker.critPercentage / 5];
     attacker.hitPercentage = halflingDieRoll[defender.ac - attacker.toHit] - attacker.critPercentage;
   } else {
