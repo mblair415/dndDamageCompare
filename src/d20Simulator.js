@@ -5,7 +5,7 @@ This is how the accuracy was determined.
 Not all of the simulations can be  done at once or it will timeout.
 */
 
-function dieRoll() {
+const dieRoll = () => {
   return Math.floor((20 * Math.random()) + 1)
 }
 
@@ -22,7 +22,7 @@ const halflingD20 = {};
 const luckyD20 = {};
 const regularD20 = {};
 
-function regularResult(times) {
+const regularResult = times => {
   let sum = 0;
   let count = 1;
   let d20AsArray = new Array(21).fill(0);
@@ -38,7 +38,7 @@ function regularResult(times) {
   }
 }
 
-function advantageResult(times) {
+const advantageResult = times => {
   let sum = 0;
   let count = 1;
   let d20AsArray = new Array(21).fill(0);
@@ -54,7 +54,7 @@ function advantageResult(times) {
   }
 }
 
-function disadvantageResult(times) {
+const disadvantageResult = times => {
   let sum = 0;
   let count = 1;
   let d20AsArray = new Array(21).fill(0);
@@ -70,7 +70,7 @@ function disadvantageResult(times) {
   }
 }
 
-function halflingResult(times){
+const halflingResult = times => {
   let sum = 0;
   let count = 1;
   let d20AsArray = new Array(21).fill(0);
@@ -89,7 +89,7 @@ function halflingResult(times){
   }
 }
 
-function luckyResult(times) {
+const luckyResult = times => {
   let sum = 0;
   let count = 1;
   let d20AsArray = new Array(21).fill(0);
@@ -110,7 +110,7 @@ function luckyResult(times) {
   }
 }
 
-function advantageLuckyHalflingResult(times) {
+const advantageLuckyHalflingResult = times => {
   let sum = 0;
   let count = 1;
   let d20AsArray = new Array(21).fill(0);
@@ -144,7 +144,7 @@ function advantageLuckyHalflingResult(times) {
   }
 }
 
-function advantageHalflingResult(times) {
+const advantageHalflingResult = times => {
   let sum = 0;
   let count = 1;
   let d20AsArray = new Array(21).fill(0);
@@ -166,7 +166,7 @@ function advantageHalflingResult(times) {
   }
 }
 
-function advantageLuckyResult(times) {
+const advantageLuckyResult = times => {
   let sum = 0;
   let count = 1;
   let d20AsArray = new Array(21).fill(0);
@@ -196,7 +196,7 @@ function advantageLuckyResult(times) {
   }
 }
 
-function luckyHalflingResult(times) {
+const luckyHalflingResult = times => {
   let sum = 0;
   let count = 1;
   let d20AsArray = new Array(21).fill(0);
@@ -222,7 +222,7 @@ function luckyHalflingResult(times) {
   }
 }
 
-function disadvantageLuckyHalflingResult(times) {
+const disadvantageLuckyHalflingResult = times => {
   let sum = 0;
   let count = 1;
   let d20AsArray = new Array(21).fill(0);
@@ -248,7 +248,7 @@ function disadvantageLuckyHalflingResult(times) {
   }
 }
 
-function disadvantageLuckyResult(times) {
+const disadvantageLuckyResult = times => {
   let sum = 0;
   let count = 1;
   let d20AsArray = new Array(21).fill(0);
@@ -264,7 +264,7 @@ function disadvantageLuckyResult(times) {
   }
 }
 
-function disadvantageHalflingResult(times) {
+const disadvantageHalflingResult = times => {
   let sum = 0;
   let count = 1;
   let d20AsArray = new Array(21).fill(0);

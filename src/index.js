@@ -1,13 +1,14 @@
 console.log('index.js running');
 
+/*
+  Sharpshooter and great weapon master do the following:
+    Automatically adjust accuracy for the -5 to hit
+    Include the damage as a damage modifier to the first portion of the attack for damage type
+  hitPercentage will be set by the accuracy function based on the target, and takes critPercentage into account.
+  accuracy function will adjust the critPercentage based on any accuracy modifier (ie: advantage, halfling ....).
+*/
 const attacker = {
-  /*
-Sharpshooter and great weapon master can only be selected for one set of damage, and it automatically adjusts accuracy.
-hitPercentage will be set by the accuracy function based on the target.
-accuracy function will adjust the critPercentage based on advantage/disadvantage.
-An assumption is made that the first source of damage is where the great weapon master feat or sharpshooting feat is added.
-  */
-  toHit : 9,
+  toHit : 5 ,
   advantage : false,
   disadvantage : false,
   hitPercentage : undefined,
@@ -18,34 +19,41 @@ An assumption is made that the first source of damage is where the great weapon 
   luckyFeat : false,
   sharpshooterFeat : false,
   greatWeaponFeat : true,
-  savageAttackerFeat : false, // not yet included
+  savageAttackerFeat : false,
   gwFightStyle : false,
   damage : [{
-    diceNum : 1,
+    diceNum : 2,
+    dieSize : 6,
+    modifier : 3,
+    damageType : 'slashing'
+  },{
+    diceNum : 2,
     dieSize : 8,
     modifier : 0,
-    damageType : 'fire'
+    damageType : 'radiant'
   }]
 };
 
-const defender = {
-  /*
+/*
   A later update will cover spell feats, class abilities, saves, and advantage/disadvantage on spell saving throws
-  */
+*/
+const defender = {
   ac : 14,
-  save : undefined, // not accounted for.  damage per swing changes
-  saveStat : {
-    advantage : false, // not accounted for.  hit and crit changes.
-    disadvantage : false // not accounted for.  hit and crit changes.
-    // strSave : 4
-  },
+  // save : undefined, // not accounted for.  damage per swing changes
+  // saveStat : {
+  //   advantage : false, // not accounted for.  hit and crit changes.
+  //   disadvantage : false, // not accounted for.  hit and crit changes.
+  //   strSave : 4
+  // },
   resistances : new Set(),
   vulnerabilities : new Set(),
   immunities : new Set()
 };
 
-// these were determined by running a simulation with 450k - 800k die rolls to determine percentages
-// in the case of lucky the assumption is burning max possible lucky charges to get the best possible single attack roll.
+/*
+  these were determined by running a simulation with 450k - 800k die rolls to determine percentages
+  in the case of lucky the assumption is burning max possible lucky charges to get the best possible single attack roll.
+*/
 const advantageDieRoll = {
   1 : 100, 2 : 99.8, 3 : 99, 4 : 97.8, 5 : 96,
   6 : 93.8, 7 : 91, 8 : 87.7, 9 : 84, 10 : 79.8,
@@ -123,100 +131,136 @@ const disadvantageHalflingDieRoll = {
   16: 6.9, 17: 4.4, 18: 2.5, 19: 1.1, 20: 0.3
 };
 
-// key is sides on die value is % extra damage if rerolling a roll of 1 or 2 a single time.
-const gWFightStyleDamMod = {
-  12 : .126, 10 : .145, 8 : .166, 6 : .19, 4 : .2
-}
 
+/*
+  This was determined with 900,000 die rolls through savageAttackerFeat.js
+  Should include each thing that modifies damage die results (ie: reroll one one or two, advantage on damage thorugh savage)
+*/
+const averageDieDamage = {
+  unmodified : {
+    4 : 2.5,
+    6 : 3.5,
+    8 : 4.5,
+    10 : 5.5,
+    12 : 6.5 
+  },
+  gwFeat : {
+    4 : 3,
+    6 : 4.16,
+    8 : 5.24,
+    10 : 6.3,
+    12 : 7.33
+  },
+  savageAttackerFeat : {
+    4 : 3.12,
+    6 : 4.47,
+    8 : 5.81,
+    10 : 7.15,
+    12 : 8.49,
+  },
+  gwAndSavageAttacker : {
+    4 : 3.53,
+    6 : 4.96,
+    8 : 6.34,
+    10 : 7.7,
+    12 : 9.05
+  }
+};
+
+const determineAverageDamPerDie = (attacker, dieSize) => {
+  if (attacker.savageAttackerFeat && attacker.gwFightStyle) {
+    return averageDieDamage.gwAndSavageAttacker[dieSize];
+  } else if (attacker.savageAttackerFeat) {
+    return averageDieDamage.savageAttackerFeat[dieSize];
+  } else if (attacker.gwFightStyle) {
+    return averageDieDamage.gwFeat[dieSize];
+  } else {
+    return averageDieDamage.unmodified[dieSize];
+  }
+};
+
+/*
+  If target is immune to damage type of all attacks this returns 0.
+  Loops through damage soures to check to see which combination of a single die size and damage type is highest.
+  Adding damage will take resistance and vulnerabilities into account.
+  Ensures great weapon fighting style and/or savage attacker feat is taken into account on a rolled damage die.
+*/
 const halfOrcCrit = (attacker, defender) => {
-  /*
-If target is immune to damage type of all attacks this returns 0.
-Loops through damage soures to check to see which combination of a single die size and damage type is highest.
-Adding damage will take resistance and vulnerabilities into account.
-Ensures great weapon fighting style is taken into account on a rolled die.
-  */
-  let highestOption = 0;
-  let gwMod;
+  let highestOption = 0,
+    avgDie;
 
   attacker.damage.forEach( atk => {
-    console.log('half orc iteration ', atk)
     if (!defender.immunities.has(atk.damageType)) {
-      gwMod = attacker.gwFightStyle ? ((atk.dieSize + 1)/2) * gWFightStyleDamMod[atk.dieSize] * atk.diceNum : 0;
+      avgDie = determineAverageDamPerDie(attacker, atk.dieSize);
 
       if (defender.resistances.has(atk.damageType)) {
-        highestOption = Math.max(highestOption, (gwMod +(atk.dieSize + 1) / 2) / 2);
+        highestOption = Math.max(highestOption, avgDie / 2);
       } else if (defender.vulnerabilities.has(atk.damageType)) {
-        highestOption = Math.max(higestOption, (gwMod + (atk.dieSize + 1) / 2) * 2);
+        highestOption = Math.max(higestOption, avgDie * 2);
       } else {
-        highestOption = Math.max(highestOption, gwMod + (atk.dieSize + 1) / 2);
+        highestOption = Math.max(highestOption, avgDie);
       }
-
-      console.log({highestOption})
     }
   });
 
   return highestOption;
 }
 
+/*
+  Same function will spit out damage for a regular hit or a crit.
+  halfOrc only triggered on a critical hit and when the halfOrc flag is true.
+  If sharpshooterFeat or greatWeaponFeat are true it applies the damage as a modifer to the first "damage".
+  Takes immunity, vulnerability, and resistance into account on each damage type.
+  Basic damage math:
+    Average roll on a die is the number of sides plus 1.  Then divide by two.
+    
+    number of dice * average result on the die rolled + modifier
+*/
 const attackDamage = (attacker, defender, hitOrCrit) => {
-  /*
-Same function will spit out damage for a regular hit or a crit.
-halfOrc only triggered on a critical hit.
-Returns object with a key for totalHit damage and a key for an
-  array of all of the damage types that were used in the attack.
-  This array isn't currently used for anything but reference.
-If sharpshooterFeat or greatWeaponFeat are true tracks and applies the
-  ideal damage.
-Basic damage math:
-  Average roll on a die is the number of sides plus 1.  Then divide by two.
-
-  number of dice * ((number of sides on that die + 1) / 2) + modifier
-  */
-  let rawDamage;
-  let gWMod;
-  let hitTotal = 0;
-  const hit = hitOrCrit === 'hit';
-  const crit = hitOrCrit === 'crit';
+  let swingTotal = 0,
+    avgDie,
+    rawDamage;
+  const hit = hitOrCrit === 'hit',
+    crit = hitOrCrit === 'crit';
 
   if (hit && (attacker.greatWeaponFeat || attacker.sharpshooterFeat)) {
     attacker.damage[0].modifier += 10;
   }
 
   attacker.damage.forEach( atk => {
-    gWMod = attacker.gwFightStyle ? 
-      ((atk.dieSize + 1)/2) * gWFightStyleDamMod[atk.dieSize] * atk.diceNum * (hit ? 1 : 2) : 
-      0;
-    rawDamage = atk.diceNum * (hit ? 1 : 2) * ((atk.dieSize + 1)/2) + gWMod + atk.modifier;
 
     if (!defender.immunities.has(atk.damageType)) {
+      avgDie = determineAverageDamPerDie(attacker, atk.dieSize);
+      rawDamage = atk.diceNum * avgDie * (hit ? 1 : 2) + atk.modifier;
+
       if (defender.resistances.has(atk.damageType)) {
-        hitTotal += rawDamage / 2;
+        swingTotal += rawDamage / 2;
       } else if (defender.vulnerabilities.has(atk.damageType)) {
-        hitTotal += rawDamage * 2;
+        swingTotal += rawDamage * 2;
       } else {
-        hitTotal += rawDamage;
+        swingTotal += rawDamage;
       }
     }
   });
 
   if (attacker.halfOrc && crit) {
-    hitTotal += halfOrcCrit(attacker, defender);
+    swingTotal += halfOrcCrit(attacker, defender);
   }
 
-  return hitTotal;
+  return swingTotal;
 }
 
-const accuracy = (attacker, defender) => {
-  /*
-Sets the accuracy for the character based on the target.
-Handles the -5 to hit from great weapon feat or sharpshooter feat.
-Also adjusts the crit percentage if advantage or disadvantage
+/*
+  Sets the accuracy for the character based on the target.
+  Handles the -5 to hit from great weapon feat or sharpshooter feat.
+  Also adjusts the crit percentage if advantage or disadvantage
 
-Basic math is:
-(21 - (defender armor class - attacker toHit modifer)) * 5
-5% chance of rolling each side on the die.
-More complex accuracy determined by a simulator
-  */
+  Basic math is:
+  (21 - (defender armor class - attacker toHit modifer)) * 5
+  5% chance of rolling each side on the die.
+  More complex accuracy determined by a simulator
+*/
+const accuracy = (attacker, defender) => {
   if (attacker.sharpshooterFeat || attacker.greatWeaponFeat) {
     attacker.toHit -= 5;
   }
@@ -261,16 +305,16 @@ More complex accuracy determined by a simulator
   attacker.hitPercentage = Math.max(attacker.hitPercentage, 0);
 }
 
+/*
+  Averages determined by looking at 100 swings.
+
+  Average number of hits in 100 swings * average damage per hit
+  Average number of crits in 100 swings * average damage per crit
+
+  Sum the above numbers then divide by 100 to get damage per swing
+    which represents misses, hits and critical hits
+*/
 const damagePerSwing = (attacker, defender) => {
-  /*
-Averages determined by looking at 100 swings.
-
-Average number of hits in 100 swings * average damage per hit
-Average number of crits in 100 swings * average damage per crit
-
-Sum the above numbers then divide by 100 to get damage per swing
-  which represents misses, hits and critical hits
-  */
   accuracy(attacker, defender);
 
   const hitTotal = attackDamage(attacker, defender, 'hit') * attacker.hitPercentage;
