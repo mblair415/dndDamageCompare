@@ -8,19 +8,19 @@ console.log('index.js running');
   accuracy function will adjust the critPercentage based on any accuracy modifier (ie: advantage, halfling ....).
 */
 const attacker = {
-  toHit : 5 ,
-  advantage : true,
+  toHit : 7,
+  advantage : false,
   disadvantage : false,
   hitPercentage : undefined,
   critPercentage : 5,
   race : {
-    halfling : true,
+    halfling : false,
     halfOrc : false
   },
   feat : {
     elvenAccuracy : false,
     greatWeapon : false,
-    lucky : true,
+    lucky : false,
     savageAttacker : false,
     sharpshooter : false,
   },
@@ -39,7 +39,7 @@ const attacker = {
   A later update will cover spell feats, class abilities, saves, and advantage/disadvantage on spell saving throws
 */
 const defender = {
-  ac : 14,
+  ac : 15,
   // save : undefined, // not accounted for.  damage per swing changes
   // saveStat : {
   //   advantage : false, // not accounted for.  hit and crit changes.
@@ -89,6 +89,13 @@ const advantageLuckyHalflingDieRoll = {
   11: 79.1, 12: 74.5, 13: 69, 14: 62.9, 15: 56.1,
   16: 48.6, 17: 40.3, 18: 31.3, 19: 21.6, 20: 11.1
 };
+
+const elvenAccuracyDieRoll = {
+  1: 100, 2: 100, 3: 99.9, 4: 99.7, 5: 99.2,
+  6: 98.4, 7: 97.3, 8: 95.7, 9: 93.6, 10: 90.9,
+  11: 87.5, 12: 83.4, 13: 78.4, 14: 72.5, 15: 65.7,
+  16: 57.9, 17: 48.8, 18: 38.6, 19: 27.1, 20: 14.3
+}
 
 const advantageHalflingDieRoll = {
   1: 100, 2: 100, 3: 99.7, 4: 98.8, 5: 97.5,
@@ -287,6 +294,9 @@ const accuracy = (attacker, defender) => {
   } else if (attacker.race.halfling && attacker.feat.lucky) {
     attacker.critPercentage = luckyHalflingDieRoll[21 - attacker.critPercentage / 5];
     attacker.hitPercentage = luckyHalflingDieRoll[defender.ac - attacker.toHit] - attacker.critPercentage;
+  } else if (attacker.feat.elvenAccuracy) { 
+    attacker.critPercentage = elvenAccuracyDieRoll[21 - attacker.critPercentage / 5];
+    attacker.hitPercentage = elvenAccuracyDieRoll[defender.ac - attacker.toHit] - attacker.critPercentage;
   } else if (attacker.advantage) {
     attacker.critPercentage = advantageDieRoll[21 - attacker.critPercentage / 5];
     attacker.hitPercentage = advantageDieRoll[defender.ac - attacker.toHit] - attacker.critPercentage;
@@ -319,7 +329,6 @@ const damagePerSwing = (attacker, defender) => {
   accuracy(attacker, defender);
 
   const hitTotal = attackDamage(attacker, defender, 'hit') * attacker.hitPercentage;
-
   const critTotal = attackDamage(attacker, defender, 'crit') * attacker.critPercentage;
 
   return (hitTotal + critTotal) / 100;

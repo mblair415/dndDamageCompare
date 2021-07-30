@@ -12,6 +12,7 @@ const dieRoll = () => {
 const advantageLuckyHalflingD20 = {};
 const disadvantageLuckyHalflingD20 = {};
 const advantageLuckyD20 = {};
+const elvenAccuracyD20 = {};
 const advantageHalflingD20 = {};
 const disadvantageLuckyD20 = {};
 const disadvantageHalflingD20 = {};
@@ -196,6 +197,32 @@ const advantageLuckyResult = times => {
   }
 }
 
+const elvenAccuracyResult = times => {
+  let sum = 0;
+  let count = 1;
+  let d20AsArray = new Array(21).fill(0);
+  let first;
+  let second;
+  let third;
+
+  while (count < times + 1) {
+    first = dieRoll();
+    second = dieRoll();
+    third = dieRoll();
+
+    d20AsArray[Math.max(first, second, third)]++;
+    count++;
+  }
+
+  for (let i = 20; i > 0; i--) {
+    sum+= d20AsArray[i];
+    elvenAccuracyD20[i] = (Math.round(sum/times * 1000) / 10);
+    // elvenAccuracyD20[i] = sum/times * 1000 / 10;
+
+  }
+
+}
+
 const luckyHalflingResult = times => {
   let sum = 0;
   let count = 1;
@@ -290,8 +317,10 @@ const disadvantageHalflingResult = times => {
 
 // ** Cannot do all at once **
 
-regularResult(800000);
-advantageResult(800000);
+// regularResult(800000);
+// advantageResult(800000);
+elvenAccuracyResult(800000);
+
 // disadvantageResult(800000);
 // halflingResult(800000);
 // luckyResult(800000);
@@ -306,15 +335,16 @@ advantageResult(800000);
 
 
 
-console.log('regular ', regularD20);
-console.log('advantage ', advantageD20);
-console.log('disadvantage ', disadvantageD20);
-console.log('halfling ', halflingD20);
-console.log('lucky ', luckyD20);
-console.log('advantageLuckyHalfling ', advantageLuckyHalflingD20);
-console.log('advantageHalfling ', advantageHalflingD20);
-console.log('advantageLucky ', advantageLuckyD20)
-console.log('luckyHalfling ', luckyHalflingD20);
-console.log('disadvantageLuckyHalfling ', disadvantageLuckyHalflingD20);
-console.log('disadvantageLucky ', disadvantageLuckyD20);
-console.log('disadvantageHalfling ', disadvantageHalflingD20);
+// console.log('regular ', regularD20);
+// console.log('advantage ', advantageD20);
+// console.log('disadvantage ', disadvantageD20);
+// console.log('halfling ', halflingD20);
+// console.log('lucky ', luckyD20);
+// console.log('advantageLuckyHalfling ', advantageLuckyHalflingD20);
+// console.log('advantageHalfling ', advantageHalflingD20);
+// console.log('advantageLucky ', advantageLuckyD20)
+// console.log('luckyHalfling ', luckyHalflingD20);
+// console.log('disadvantageLuckyHalfling ', disadvantageLuckyHalflingD20);
+// console.log('disadvantageLucky ', disadvantageLuckyD20);
+// console.log('disadvantageHalfling ', disadvantageHalflingD20);
+console.log('elvenAccuracy ', elvenAccuracyD20);
