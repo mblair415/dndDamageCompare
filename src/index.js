@@ -6,6 +6,10 @@ console.log('index.js running');
     Include the damage as a damage modifier to the first portion of the attack for damage type
   hitPercentage will be set by the accuracy function based on the target, and takes critPercentage into account.
   accuracy function will adjust the critPercentage based on any accuracy modifier (ie: advantage, halfling ....).
+  critPercentage is the odds of rolling the target critical hit die value on a D20
+    the default value is 20 and this is a 5% crit chance
+    if the character crits on 19 or 20 this is a 10% crit chance
+    if the character crits on an 18, 19, or 20 this is a 15% crit chance
 */
 const attacker = {
   toHit : 7,
