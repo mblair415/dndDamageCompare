@@ -18,7 +18,7 @@ const attacker = {
     halfOrc : false
   },
   feat : {
-    elvenAccuracy : false,
+    elvenAccuracy : true,
     greatWeapon : false,
     lucky : false,
     savageAttacker : false,
@@ -28,9 +28,9 @@ const attacker = {
     gwFightStyle : false
   },
   damage : [{
-    diceNum : 1,
-    dieSize : 6,
-    modifier : 0,
+    diceNum : 2,
+    dieSize : 8,
+    modifier : 4,
     damageType : 'slashing'
   }]
 };
@@ -285,7 +285,7 @@ const accuracy = (attacker, defender) => {
   } else if (attacker.disadvantage && attacker.race.halfling) {
     attacker.critPercentage = disadvantageHalflingDieRoll[21 - attacker.critPercentage / 5];
     attacker.hitPercentage = disadvantageHalflingDieRoll[defender.ac - attacker.toHit] - attacker.critPercentage;
-  } else if (attacker.advantage && attacker.feat.lucky || attacker.feat.elvenAccuracy) {
+  } else if (attacker.advantage && attacker.feat.lucky) {
     attacker.critPercentage = advantageLuckyDieRoll[21 - attacker.critPercentage / 5];
     attacker.hitPercentage = advantageLuckyDieRoll[defender.ac - attacker.toHit] - attacker.critPercentage;
   } else if (attacker.disadvantage && attacker.feat.lucky) {
