@@ -240,7 +240,6 @@ const attackDamage = (attacker, defender, hitOrCrit) => {
   }
 
   attacker.damage.forEach( atk => {
-
     if (!defender.immunities.has(atk.damageType)) {
       avgDie = determineAverageDamPerDie(attacker, atk.dieSize);
       rawDamage = atk.diceNum * avgDie * (hit ? 1 : 2) + atk.modifier;
@@ -277,22 +276,22 @@ const accuracy = (attacker, defender) => {
     attacker.toHit -= 5;
   }
 
-  if (attacker.advantage && attacker.race.halfling && attacker.feat.lucky) {
+  if (attacker.feat.lucky && attacker.advantage && attacker.race.halfling) {
     attacker.critPercentage = advantageLuckyHalflingDieRoll[21 - attacker.critPercentage / 5];
     attacker.hitPercentage = advantageLuckyHalflingDieRoll[defender.ac - attacker.toHit] - attacker.critPercentage;
-  } else if (attacker.disadvantage && attacker.race.halfling && attacker.feat.lucky) {
+  } else if (attacker.feat.lucky && attacker.disadvantage && attacker.race.halfling) {
     attacker.critPercentage = disadvantageLuckyHalflingDieRoll[21 - attacker.critPercentage / 5];
     attacker.hitPercentage = disadvantageLuckyHalflingDieRoll[defender.ac - attacker.toHit] - attacker.critPercentage;
-  } else if (attacker.advantage && attacker.race.halfling) {
+  } else if (attacker.race.halfling && attacker.advantage) {
     attacker.critPercentage = advantageHalflingDieRoll[21 - attacker.critPercentage / 5];
     attacker.hitPercentage = advantageHalflingDieRoll[defender.ac - attacker.toHit] - attacker.critPercentage;
-  } else if (attacker.disadvantage && attacker.race.halfling) {
+  } else if (attacker.race.halfling && attacker.disadvantage) {
     attacker.critPercentage = disadvantageHalflingDieRoll[21 - attacker.critPercentage / 5];
     attacker.hitPercentage = disadvantageHalflingDieRoll[defender.ac - attacker.toHit] - attacker.critPercentage;
-  } else if (attacker.advantage && attacker.feat.lucky) {
+  } else if (attacker.feat.lucky && attacker.advantage) {
     attacker.critPercentage = advantageLuckyDieRoll[21 - attacker.critPercentage / 5];
     attacker.hitPercentage = advantageLuckyDieRoll[defender.ac - attacker.toHit] - attacker.critPercentage;
-  } else if (attacker.disadvantage && attacker.feat.lucky) {
+  } else if (attacker.feat.lucky && attacker.disadvantage) {
     attacker.critPercentage = disadvantageLuckyDieRoll[21 - attacker.critPercentage / 5];
     attacker.hitPercentage = disadvantageLuckyDieRoll[defender.ac - attacker.toHit] - attacker.critPercentage;
   } else if (attacker.race.halfling && attacker.feat.lucky) {
